@@ -27,9 +27,19 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const serviceCollection = client
-      .db("toursDB").collection("services");
+    const serviceCollection = client.db("toursDB").collection("services");
 
+    app.get("/api/v1/services/:id", async (req, res) => {
+      const id = req.params.id;
+      res.send(id)
+      console.log(id);
+    });
+
+    app.get("/api/v1/services", async (req, res) => {
+      const filter = serviceCollection.find();
+      const result = await filter.toArray();
+      res.send(result);
+    });
     app.post("/api/v1/services", async (req, res) => {
       const adddata = req.body;
       const result = await serviceCollection.insertOne(adddata);
