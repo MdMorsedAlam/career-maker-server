@@ -28,6 +28,7 @@ async function run() {
     await client.connect();
 
     const serviceCollection = client.db("toursDB").collection("services");
+    const bookCollection = client.db("toursDB").collection("bookings");
 // Find One For Update
     app.get("/api/v1/services/:id", async (req, res) => {
       const id = req.params.id;
@@ -54,8 +55,7 @@ async function run() {
     }
     const result = await serviceCollection.updateOne(filter,updateData,options);
     res.send(result);
-    // console.log(id)
-    // console.log(result)
+    
   });
   // Delete service from my service
     app.get("/api/v1/my-services/:id", async (req, res) => {
@@ -82,6 +82,12 @@ async function run() {
       const result = await serviceCollection.insertOne(adddata);
       res.send(result);
     });
+    // Set Data To Bookings
+    app.post('/api/v1/bookings',async(req,res)=>{
+      const bookData=req.body;
+      const result = await bookCollection.insertOne(bookData);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
