@@ -1,16 +1,24 @@
 const express = require("express");
 const cors = require("cors");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.POST || 3737;
 const userdb = process.env.USER_DB;
 const passdb = process.env.PASS_DB;
+const secretToken = process.env.TOKEN;
 
 // Middle were
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 
 const uri = `mongodb+srv://${userdb}:${passdb}@cluster0.yhpfxjc.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -30,6 +38,22 @@ async function run() {
 
     const serviceCollection = client.db("toursDB").collection("services");
     const bookCollection = client.db("toursDB").collection("bookings");
+    // Jwt
+    app.post("/api/v1/jwt", (req, res) => {
+      const email = req.body;
+      const token = jwt.sign(email, secretToken, { expiresIn: "1h" });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .send({ message: "Success" });
+    });
+    app.post("/api/v1/logout", (req, res) => {
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
+
     // Find One For Update
     app.get("/api/v1/services/:id", async (req, res) => {
       const id = req.params.id;
@@ -96,7 +120,7 @@ async function run() {
     // Get Query Data For My Booked
     app.get("/api/v1/my-bookings", async (req, res) => {
       const email = req.query.email;
-      console.log(email)
+      console.log(email);
       const query = { uemail: email };
       const cursor = bookCollection.find(query);
       const result = await cursor.toArray();
@@ -105,7 +129,7 @@ async function run() {
     // Get Query Data For Others Booked
     app.get("/api/v1/others-bookings", async (req, res) => {
       const email = req.query.email;
-      console.log(email)
+      console.log(email);
       const query = { semail: email };
       const cursor = bookCollection.find(query);
       const result = await cursor.toArray();
