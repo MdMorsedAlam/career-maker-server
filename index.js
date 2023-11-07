@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require('jsonwebtoken');
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
@@ -29,46 +30,49 @@ async function run() {
 
     const serviceCollection = client.db("toursDB").collection("services");
     const bookCollection = client.db("toursDB").collection("bookings");
-// Find One For Update
+    // Find One For Update
     app.get("/api/v1/services/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await serviceCollection.findOne(query);
       res.send(result);
     });
-  //  Update service
-  app.patch("/api/v1/update-service/:id", async (req, res) => {
-    const id = req.params.id;
-    const data=req.body;
-    const filter = { _id: new ObjectId(id) };
-    const options = { upsert: true };
-    const updateData={
-      $set:{
-        address:data.address,
-  pdes:data.pdes,
-  sname:data.sname,
-  price:data.price,
-  sphoto:data.sphoto,
-  des:data.des,
-  area:data.area
-      }
-    }
-    const result = await serviceCollection.updateOne(filter,updateData,options);
-    res.send(result);
-    
-  });
-  // Delete service from my service
+    //  Update service
+    app.patch("/api/v1/update-service/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateData = {
+        $set: {
+          address: data.address,
+          pdes: data.pdes,
+          sname: data.sname,
+          price: data.price,
+          sphoto: data.sphoto,
+          des: data.des,
+          area: data.area,
+        },
+      };
+      const result = await serviceCollection.updateOne(
+        filter,
+        updateData,
+        options
+      );
+      res.send(result);
+    });
+    // Delete service from my service
     app.get("/api/v1/my-services/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result=await serviceCollection.deleteOne(query);
+      const result = await serviceCollection.deleteOne(query);
       res.send(result);
     });
     app.get("/api/v1/my-services", async (req, res) => {
       const email = req.query.email;
-      const query = { email:email};
-      const cursor =serviceCollection.find(query);
-      const result= await cursor.toArray();
+      const query = { email: email };
+      const cursor = serviceCollection.find(query);
+      const result = await cursor.toArray();
       res.send(result);
     });
 
@@ -83,11 +87,30 @@ async function run() {
       res.send(result);
     });
     // Set Data To Bookings
-    app.post('/api/v1/bookings',async(req,res)=>{
-      const bookData=req.body;
+    app.post("/api/v1/bookings", async (req, res) => {
+      const bookData = req.body;
       const result = await bookCollection.insertOne(bookData);
       res.send(result);
-    })
+    });
+
+    // Get Query Data For My Booked
+    app.get("/api/v1/my-bookings", async (req, res) => {
+      const email = req.query.email;
+      console.log(email)
+      const query = { uemail: email };
+      const cursor = bookCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    // Get Query Data For Others Booked
+    app.get("/api/v1/others-bookings", async (req, res) => {
+      const email = req.query.email;
+      console.log(email)
+      const query = { semail: email };
+      const cursor = bookCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
