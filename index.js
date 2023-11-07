@@ -28,13 +28,36 @@ async function run() {
     await client.connect();
 
     const serviceCollection = client.db("toursDB").collection("services");
-
+// Find One For Update
     app.get("/api/v1/services/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await serviceCollection.findOne(query);
       res.send(result);
     });
+  //  Update service
+  app.patch("/api/v1/update-service/:id", async (req, res) => {
+    const id = req.params.id;
+    const data=req.body;
+    const filter = { _id: new ObjectId(id) };
+    const options = { upsert: true };
+    const updateData={
+      $set:{
+        address:data.address,
+  pdes:data.pdes,
+  sname:data.sname,
+  price:data.price,
+  sphoto:data.sphoto,
+  des:data.des,
+  area:data.area
+      }
+    }
+    const result = await serviceCollection.updateOne(filter,updateData,options);
+    res.send(result);
+    // console.log(id)
+    // console.log(result)
+  });
+  // Delete service from my service
     app.get("/api/v1/my-services/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
