@@ -15,10 +15,28 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "https://my-eleven-assignment.web.app"],
     credentials: true,
   })
 );
+
+// Middle Were For Verify
+
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized" });
+  }
+  {
+    jwt.verify(token, secretToken, (err, decoded) => {
+      if (err) {
+        return res.status(401).send({ message: "unauthorized" });
+      }
+      req.user = decoded;
+      next();
+    });
+  }
+};
 
 const uri = `mongodb+srv://${userdb}:${passdb}@cluster0.yhpfxjc.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -92,7 +110,10 @@ async function run() {
       const result = await serviceCollection.deleteOne(query);
       res.send(result);
     });
-    app.get("/api/v1/my-services", async (req, res) => {
+    app.get("/api/v1/my-services", verifyToken, async (req, res) => {
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "Forbidden Accress" });
+      }
       const email = req.query.email;
       const query = { email: email };
       const cursor = serviceCollection.find(query);
@@ -118,18 +139,24 @@ async function run() {
     });
 
     // Get Query Data For My Booked
-    app.get("/api/v1/my-bookings", async (req, res) => {
+    app.get("/api/v1/my-bookings", verifyToken, async (req, res) => {
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "Forbidden Accress" });
+      }
       const email = req.query.email;
-      console.log(email);
+
       const query = { uemail: email };
       const cursor = bookCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
     // Get Query Data For Others Booked
-    app.get("/api/v1/others-bookings", async (req, res) => {
+    app.get("/api/v1/others-bookings", verifyToken, async (req, res) => {
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "Forbidden Accress" });
+      }
       const email = req.query.email;
-      console.log(email);
+
       const query = { semail: email };
       const cursor = bookCollection.find(query);
       const result = await cursor.toArray();
