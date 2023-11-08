@@ -141,6 +141,21 @@ async function run() {
       res.send(result);
     });
 
+    // Update Bookings Data With Status
+    app.patch('/api/v1/update-status/:id',(req,res)=>{
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status:data.status,
+        },
+      };
+      const result = bookCollection.updateOne(filter, updateDoc);
+      res.send(result);
+      // console.log(result);
+    })
+
     // Get Query Data For My Booked
     app.get("/api/v1/my-bookings", verifyToken, async (req, res) => {
       if (req.user.email !== req.query.email) {
