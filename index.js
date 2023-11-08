@@ -52,7 +52,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const serviceCollection = client.db("toursDB").collection("services");
     const bookCollection = client.db("toursDB").collection("bookings");
@@ -61,10 +61,10 @@ async function run() {
       const email = req.body;
       const token = jwt.sign(email, secretToken, { expiresIn: "1h" });
       res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
+      .cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
         })
         .send({ message: "Success" });
     });
@@ -110,10 +110,7 @@ async function run() {
       const result = await serviceCollection.deleteOne(query);
       res.send(result);
     });
-    app.get("/api/v1/my-services", verifyToken, async (req, res) => {
-      if (req.user.email !== req.query.email) {
-        return res.status(403).send({ message: "Forbidden Accress" });
-      }
+    app.get("/api/v1/my-services", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const cursor = serviceCollection.find(query);
@@ -141,7 +138,7 @@ async function run() {
     // Get Query Data For My Booked
     app.get("/api/v1/my-bookings", verifyToken, async (req, res) => {
       if (req.user.email !== req.query.email) {
-        return res.status(403).send({ message: "Forbidden Accress" });
+        return res.status(403).send({ message: "Forbidden Access" });
       }
       const email = req.query.email;
 
@@ -153,7 +150,7 @@ async function run() {
     // Get Query Data For Others Booked
     app.get("/api/v1/others-bookings", verifyToken, async (req, res) => {
       if (req.user.email !== req.query.email) {
-        return res.status(403).send({ message: "Forbidden Accress" });
+        return res.status(403).send({ message: "Forbidden Access" });
       }
       const email = req.query.email;
 
