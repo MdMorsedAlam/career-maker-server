@@ -116,7 +116,10 @@ async function run() {
       const result = await serviceCollection.deleteOne(query);
       res.send(result);
     });
-    app.get("/api/v1/my-services", async (req, res) => {
+    app.get("/api/v1/my-services",verifyToken, async (req, res) => {
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
       const email = req.query.email;
       const query = { email: email };
       const cursor = serviceCollection.find(query);
@@ -135,27 +138,6 @@ async function run() {
       res.send(result);
     });
 
-    // patch to server
-    app.patch('/api/v1/set-count-book/:id',async(req,res)=>{
-      const id=req.params.id;
-      const data=req.body;
-      const query={_id:new ObjectId(id)}
-      const updateData={
-$set:{
-  sortcount:data.sortcount
-}
-
-      }
-      const result= await bookCollection.updateOne(query,updateData);
-      res.send(result)
-    })
-
-    // get top Bookings Data
-    app.get('api/v1/top-service',async(req,res)=>{
-      const sort={sortcount:-1}
-      const result = await bookCollection.find().sort(sort).limit(6).toArray();
-      res.send(result)
-    })
     // Set Data To Bookings
     app.post("/api/v1/bookings", async (req, res) => {
       const bookData = req.body;
